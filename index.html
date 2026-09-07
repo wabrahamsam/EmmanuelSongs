@@ -19,7 +19,7 @@
   --refrain-color:#1a4a30;--refrain-bg:rgba(45,92,69,0.07);
   --btn-bg:linear-gradient(135deg,#1e3d2e,#2d5c45);--btn-text:#fff;
   --menu-bg:#ffffff;--menu-shadow:rgba(45,92,69,0.18);
-  --lyric-size:17px;--lyric-lh:1.6;--section-gap:0.85em;
+  --lyric-size:21px;--lyric-lh:1.6;--section-gap:0.85em;
 }
 @media(prefers-color-scheme:dark){:root{
   --bg:#0d1a12;--bg2:#122018;--surface:rgba(200,230,210,0.06);--surface2:rgba(200,230,210,0.09);
@@ -32,9 +32,9 @@
 }}
 body.theme-light{--bg:#e8f0eb;--bg2:#d4e4d9;--surface:#ffffff;--surface2:rgba(0,0,0,0.04);--border:rgba(45,92,69,0.18);--border-grn:rgba(45,92,69,0.35);--text:#0f1a13;--text2:#3a3a3a;--text3:#5a6b60;--card-title:#111f16;--tab-inactive:#3a5c47;--grn:#2d5c45;--grn-dark:#1e3d2e;--grn-bg:rgba(45,92,69,0.10);--grn-bg2:rgba(45,92,69,0.06);--refrain-color:#1a4a30;--refrain-bg:rgba(45,92,69,0.07);--btn-bg:linear-gradient(135deg,#1e3d2e,#2d5c45);--btn-text:#fff;--menu-bg:#ffffff;--menu-shadow:rgba(45,92,69,0.18);}
 body.theme-dark{--bg:#0d1a12;--bg2:#122018;--surface:rgba(200,230,210,0.06);--surface2:rgba(200,230,210,0.09);--border:rgba(80,160,110,0.18);--border-grn:rgba(80,160,110,0.32);--text:#d4edd9;--text2:#b0c8b8;--text3:#6a9478;--card-title:#e2f0e6;--tab-inactive:#7abf96;--grn:#4fa873;--grn-dark:#2d5c45;--grn-bg:rgba(80,160,110,0.13);--grn-bg2:rgba(80,160,110,0.07);--refrain-color:#a8d8b8;--refrain-bg:rgba(80,160,110,0.08);--btn-bg:linear-gradient(135deg,#2d5c45,#4fa873);--btn-text:#0d1a12;--menu-bg:#122018;--menu-shadow:rgba(0,0,0,0.5);}
-body.text-sm{--lyric-size:14px;}
-body.text-md{--lyric-size:17px;}
-body.text-lg{--lyric-size:21px;}
+body.text-sm{--lyric-size:17px;}
+body.text-md{--lyric-size:21px;}
+body.text-lg{--lyric-size:26px;}
 
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 body{font-family:'Crimson Pro',Georgia,serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;transition:background .2s,color .2s;}
@@ -80,6 +80,13 @@ input[type=text]:focus{border-color:var(--grn);}
 .song-card-title{font-family:'Cinzel',serif;font-size:15.5px;font-weight:600;letter-spacing:.015em;color:var(--card-title);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
 .back-btn{display:inline-flex;align-items:center;gap:5px;color:var(--text3);cursor:pointer;margin-bottom:12px;font-family:'Cinzel',serif;font-size:10px;background:none;border:none;padding:0;letter-spacing:.07em;transition:color .2s;}
+.viewer-nav-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;}
+.viewer-nav-row .back-btn{margin-bottom:0;}
+.viewer-quick{display:flex;align-items:center;gap:4px;}
+.qc-btn{display:flex;align-items:center;justify-content:center;width:26px;height:26px;background:var(--surface);border:1px solid var(--border);border-radius:5px;color:var(--text3);cursor:pointer;font-family:'Cinzel',serif;font-size:12px;line-height:1;transition:all .2s;}
+.qc-btn:hover:not(:disabled){border-color:var(--border-grn);color:var(--grn);}
+.qc-btn:disabled{opacity:.35;cursor:default;}
+.qc-theme{font-size:14px;}
 .back-btn:hover{color:var(--grn);}
 
 .viewer{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:22px 22px 28px;}
@@ -217,7 +224,7 @@ footer{text-align:center;margin-top:40px;padding-top:14px;border-top:1px solid v
     </div>
     <div class="accordion-body" id="acc-about">
       <div style="font-family:'Cinzel',serif;font-size:15px;color:var(--grn);margin-bottom:2px;">Songs of Emmanuel</div>
-      <div style="font-size:12px;color:var(--text3);margin-bottom:12px;">Version 3.0</div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:12px;">Version 3.1</div>
       <div class="about-body">
         <strong>Emmanuel Bible Institute</strong><br>
         Tenkasi, Tamil Nadu, India<br>
@@ -259,9 +266,14 @@ function loadSettings() {
   ['sm','md','lg'].forEach(s => document.getElementById('sz-'+s).classList.toggle('on', s === size));
   ['light','auto','dark'].forEach(t => document.getElementById('th-'+t).classList.toggle('on', t === theme));
 }
+const SIZE_ORDER = ['sm','md','lg'];
+const THEME_ORDER = ['light','dark','auto'];
+const THEME_SYM = { light: '\u2600', dark: '\u263E', auto: '\u25D0' };
+
 function setSize(s) {
   ['sm','md','lg'].forEach(x => document.getElementById('sz-'+x).classList.toggle('on', x === s));
   applySize(s, true);
+  renderViewerQuick();
 }
 function applySize(s, save) {
   document.body.classList.remove('text-sm','text-md','text-lg');
@@ -271,12 +283,42 @@ function applySize(s, save) {
 function setTheme(t) {
   ['light','auto','dark'].forEach(x => document.getElementById('th-'+x).classList.toggle('on', x === t));
   applyTheme(t, true);
+  renderViewerQuick();
 }
 function applyTheme(t, save) {
   document.body.classList.remove('theme-light','theme-dark');
   if (t === 'light') document.body.classList.add('theme-light');
   if (t === 'dark') document.body.classList.add('theme-dark');
   if (save) localStorage.setItem('soe_theme', t);
+}
+
+function currentSize() { return localStorage.getItem('soe_size') || 'md'; }
+function currentTheme() { return localStorage.getItem('soe_theme') || 'auto'; }
+
+function viewerStepSize(dir) {
+  const idx = SIZE_ORDER.indexOf(currentSize());
+  const next = idx + dir;
+  if (next < 0 || next >= SIZE_ORDER.length) return;
+  setSize(SIZE_ORDER[next]);
+}
+function viewerCycleTheme() {
+  const idx = THEME_ORDER.indexOf(currentTheme());
+  const next = THEME_ORDER[(idx + 1) % THEME_ORDER.length];
+  setTheme(next);
+}
+function renderViewerQuick() {
+  const el = document.getElementById('viewer-quick');
+  if (!el) return;
+  const size = currentSize();
+  const idx = SIZE_ORDER.indexOf(size);
+  const minDisabled = idx <= 0 ? 'disabled' : '';
+  const maxDisabled = idx >= SIZE_ORDER.length - 1 ? 'disabled' : '';
+  const theme = currentTheme();
+  el.innerHTML = `
+    <button class="qc-btn" onclick="viewerStepSize(-1)" ${minDisabled} aria-label="Decrease text size">A&#8722;</button>
+    <button class="qc-btn" onclick="viewerStepSize(1)" ${maxDisabled} aria-label="Increase text size">A+</button>
+    <button class="qc-btn qc-theme" onclick="viewerCycleTheme()" aria-label="Change theme">${THEME_SYM[theme]}</button>
+  `;
 }
 
 document.addEventListener('click', e => {
@@ -450,9 +492,11 @@ function openSong(idx, fromHistory) {
   if (!s) return;
   const fromSearch = (document.getElementById('songs-q').value || '').trim().length > 0;
   const nav = document.getElementById('songs-back-nav');
-  nav.innerHTML = fromSearch
+  const backBtn = fromSearch
     ? `<button class="back-btn" onclick="backToResults()">&#8592; Back to results</button>`
     : `<button class="back-btn" onclick="goHome()">&#8592; Back to songs</button>`;
+  nav.innerHTML = `<div class="viewer-nav-row">${backBtn}<div class="viewer-quick" id="viewer-quick"></div></div>`;
+  renderViewerQuick();
   const authorLine = s.author && s.author.trim()
     ? `<div class="viewer-author">&#9997;&#65039; Author: ${esc(s.author.trim())}</div>` : '';
   const pageLine = s.page
